@@ -360,4 +360,4 @@ dependencies:
     - torch==1.8.1
     - torchvision==0.9.1
     - treelite-runtime==1.1.0
-prefix: /cluster/home/hr/anaconda3/envs/rapids
+# prefix: /cluster/home/hr/anaconda3/envs/rapids

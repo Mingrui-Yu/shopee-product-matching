@@ -1,4 +1,5 @@
 import os
+import cv2
 import math
 import random
 import numpy as np
@@ -9,12 +10,21 @@ import albumentations
 from albumentations.pytorch.transforms import ToTensorV2
 
 import torch
+import timm
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset,DataLoader
 
+import gc
 import matplotlib.pyplot as plt
+import cudf
+import cuml
+import cupy
+from cuml.feature_extraction.text import TfidfVectorizer
+from cuml import PCA
+from cuml.neighbors import NearestNeighbors
+import pdb
 
 
 # ----------------------------------------------------------------------
@@ -164,6 +174,7 @@ class DatasetPreparation(object):
 
     def readDataCsv(self):
         self.df = pd.read_csv('./shopee-product-matching/train.csv')
+        self.df_cu = cudf.DataFrame(self.df)
         self.image_paths = './shopee-product-matching/train_images/' + self.df['image']
 
     def addMatchesGroundTruth(self):
@@ -180,6 +191,38 @@ class DatasetPreparation(object):
         self.image_dataset = ImageDataset(self.image_paths, transforms)
 
 
+# ----------------------------------------------------------------------
+class MatchMethod(object):
+
+    def __init__(self, dataset):
+        self.dataset = dataset
+        pass
+
+    def getImageEmbeddings(self):
+        model = ShopeeModel(pretrained=True).to(CFG.device)
+        model.eval()
+
+        image_loader = torch.utils.data.DataLoader(
+            self.dataset.image_dataset,
+            batch_size=CFG.batch_size,
+            num_workers=CFG.num_workers
+        )
+
+        embeds = []
+        with torch.no_grad():
+            for img, label in tqdm(image_loader): 
+                img = img.cuda()
+                label = label.cuda()
+                features = model(img, label)
+                image_embeddings = features.detach().cpu().numpy()
+                embeds.append(image_embeddings)
+
+        del model
+        image_embeddings = np.concatenate(embeds)
+        print(f'Our image embeddings shape is {image_embeddings.shape}')
+        del embeds
+        gc.collect()
+        return image_embeddings
 
 
 
@@ -190,5 +233,11 @@ if __name__ == '__main__':
     shopee_data.addMatchesGroundTruth()
     shopee_data.loadImageDataset()
 
-    
-    
+    matcher = MatchMethod(shopee_data)
+
+    need_calc_embeddings = True
+    if need_calc_embeddings: # 计算并保存
+        image_embeddings = matcher.getImageEmbeddings()
+        torch.save(image_embeddings, './image_embeddings.pt')
+    else: # 加载之前计算好保存的
+        image_embeddings = torch.load('./image_embeddings.pt')
