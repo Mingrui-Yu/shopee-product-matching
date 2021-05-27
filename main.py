@@ -193,7 +193,25 @@ class DatasetPreparation(object):
                 albumentations.Normalize(),
                 ToTensorV2(p=1.0)])
         self.image_dataset = ImageDataset(self.image_paths, self.image_num, transforms)
+        
+    def add_splits(self, train_df, valid_group=0):
+            grouped = self.df.groupby('label_group').size()
 
+            print(grouped)
+            # labels, sizes =grouped.index.to_list(), grouped.to_list()
+
+            # skf = StratifiedKFold(5)
+            # splits = list(skf.split(labels, sizes))
+
+            # group_to_split =  dict()
+            # for idx in range(5):
+            #     labs = np.array(labels)[splits[idx][1]]
+            #     group_to_split.update(dict(zip(labs, [idx]*len(labs))))
+
+            # train_df['split'] = train_df.label_group.replace(group_to_split)
+            # train_df['is_valid'] = train_df['split'] == valid_group
+            # return train_df
+        
 
 # ----------------------------------------------------------------------
 class MatchMethod(object):
