@@ -26,6 +26,8 @@ from cuml import PCA
 from cuml.neighbors import NearestNeighbors
 import pdb
 
+from matching_PCA import MatchingPCA
+
 
 # ----------------------------------------------------------------------
 class CFG:
@@ -35,7 +37,7 @@ class CFG:
     margin = 0.5
     model_name =  'tf_efficientnet_b4'
     fc_dim = 512
-    img_size = 512
+    img_size = 64 # 改动
     batch_size = 2
     num_workers = 4
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -44,12 +46,13 @@ class CFG:
 
 # ----------------------------------------------------------------------
 class ImageDataset(Dataset):
-    def __init__(self, image_paths, transforms=None):
+    def __init__(self, image_paths, image_num, transforms=None):
         self.image_paths = image_paths
+        self.image_num = image_num
         self.augmentations = transforms
 
     def __len__(self):
-        return self.image_paths.shape[0]
+        return self.image_num
 
     def __getitem__(self, index):
         image_path = self.image_paths[index]
@@ -91,14 +94,14 @@ class ShopeeModel(nn.Module):
             self._init_params()
             in_features = fc_dim
 
-        self.final = ArcMarginProduct(
+        self.final = ArcMarginProduct(image_resize,
             in_features,
             n_classes,
             scale = scale,
             margin = margin,
             easy_margin = False,
             ls_eps = 0.0
-        )
+            )
         
     def _init_params(self):
         nn.init.xavier_normal_(self.classifier.weight)
@@ -176,19 +179,20 @@ class DatasetPreparation(object):
         self.df = pd.read_csv('./shopee-product-matching/train.csv')
         self.df_cu = cudf.DataFrame(self.df)
         self.image_paths = './shopee-product-matching/train_images/' + self.df['image']
+        self.image_num = 34250
 
     def addMatchesGroundTruth(self):
         tmp = self.df.groupby(['label_group'])['posting_id'].unique().to_dict()
         self.df['matches'] = self.df['label_group'].map(tmp)
         self.df['matches'] = self.df['matches'].apply(lambda x: ' '.join(x))
-        # print(self.df.head())
+        print(self.df.head())
 
     def loadImageDataset(self):
         transforms = albumentations.Compose([
                 albumentations.Resize(CFG.img_size, CFG.img_size, always_apply=True),
                 albumentations.Normalize(),
                 ToTensorV2(p=1.0)])
-        self.image_dataset = ImageDataset(self.image_paths, transforms)
+        self.image_dataset = ImageDataset(self.image_paths, self.image_num, transforms)
 
 
 # ----------------------------------------------------------------------
@@ -233,11 +237,17 @@ if __name__ == '__main__':
     shopee_data.addMatchesGroundTruth()
     shopee_data.loadImageDataset()
 
-    matcher = MatchMethod(shopee_data)
+    print("finish data preparation.")
+     
+    # matcher = MatchMethod(shopee_data)
+    # need_calc_embeddings = True
+    # if need_calc_embeddings: # 计算并保存
+    #     image_embeddings = matcher.getImageEmbeddings()
+    #     torch.save(image_embeddings, './image_embeddings.pt')
+    # else: # 加载之前计算好保存的
+    #     image_embeddings = torch.load('./image_embeddings.pt')
 
-    need_calc_embeddings = True
-    if need_calc_embeddings: # 计算并保存
-        image_embeddings = matcher.getImageEmbeddings()
-        torch.save(image_embeddings, './image_embeddings.pt')
-    else: # 加载之前计算好保存的
-        image_embeddings = torch.load('./image_embeddings.pt')
+    n_components = 200
+    image_shape = (3, CFG.img_size, CFG.img_size)
+    matcher = MatchingPCA(shopee_data, image_shape, n_components)
+    matcher.main()

@@ -1,4 +1,5 @@
 shopee-product-matching
+*.pt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
