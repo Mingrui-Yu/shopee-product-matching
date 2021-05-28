@@ -32,7 +32,7 @@ class Params:
     num_workers = 4
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     # model_path = '../input/utils-shopee/arcface_512x512_tf_efficientnet_b4_LR.pt'
-    need_calc_embeddings = True
+    need_calc_embeddings = False
 
 
 
@@ -46,7 +46,8 @@ class ShopeeModel(nn.Module):
             margin = Params.margin,
             scale = Params.scale,
             use_fc = True,
-            pretrained = True):
+            pretrained = True,
+            b_training = True):
 
         super(ShopeeModel,self).__init__()
         print('Building Model Backbone for {} model'.format(model_name))
@@ -57,6 +58,7 @@ class ShopeeModel(nn.Module):
         self.backbone.global_pool = nn.Identity()
         self.pooling =  nn.AdaptiveAvgPool2d(1)
         self.use_fc = use_fc
+        self.training = b_training
 
         if use_fc:
             self.dropout = nn.Dropout(p=0.1)

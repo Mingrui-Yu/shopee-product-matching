@@ -35,3 +35,12 @@ def score(y_true, y_pred):
     recall = intersection/len_y_true
     f1 = 2 * intersection / (len_y_pred + len_y_true)
     return precision,recall,f1
+
+
+# -------------------------------------------
+def combine_predictions(row):
+    image_prediction = row['image_predictions'].split()
+    text_prediction = row['text_predictions'].split()
+    # pdb.set_trace()
+    x = np.concatenate([np.array(image_prediction), np.array(text_prediction)])  
+    return ' '.join( np.unique(x) )
