@@ -3,7 +3,6 @@ import numpy as np
 import pandas as pd
 import cv2
 from cuml import IncrementalPCA
-from cuml.neighbors import NearestNeighbors
 import torch
 import torchvision
 import time
@@ -19,6 +18,7 @@ class Params:
     batch_size = 2048
     num_workers = 4
     n_components = 200
+    need_calc_embeddings = False
 
 
 # ----------------------------------------------------------------------
@@ -29,10 +29,9 @@ class MatchingPCA(object):
         self.image_shape = image_shape
         self.n_components = Params.n_components
         self.batch_size = Params.batch_size
-        self.image_num =  dataset.image_list.shape[0]
+        self.image_num =  dataset.image_paths.shape[0]
 
-
-    def main(self):
+    def getImageEmbeddings(self):
         image_loader = torch.utils.data.DataLoader(
             self.dataset.image_dataset,
             batch_size=self.batch_size,
@@ -64,15 +63,18 @@ class MatchingPCA(object):
         print('The variance ratio of the largest %d components: %0.4f'%
             (estimator.n_components_, sum(estimator.explained_variance_ratio_)))
 
-        nouse, image_predictions = utils.get_image_neighbors(self.dataset.df, data_reduced, \
+        return data_reduced
+
+
+    def getPrediction(self):
+        need_calc_embeddings = Params.need_calc_embeddings
+        if need_calc_embeddings: # 计算并保存
+            image_embeddings = self.getImageEmbeddings()
+            np.save('./pca_image_embeddings.npy', image_embeddings)
+        else: # 加载之前计算好保存的
+            image_embeddings = np.load('./pca_image_embeddings.npy')
+        
+        image_predictions = utils.get_image_neighbors(self.dataset.df, image_embeddings, threshold=50, \
                                 KNN=50 if len(self.dataset.df)>3 else 3)
 
-        self.dataset.df['image_predictions'] = image_predictions
-
-        self.dataset.df['image_precision'], self.dataset.df['image_recall'], self.dataset.df['image_f1'] \
-                        = utils.score(self.dataset.df['matches'], self.dataset.df['image_predictions'])
-        image_precision = self.dataset.df['image_precision'].mean()
-        image_recall = self.dataset.df['image_recall'].mean()
-        image_f1 = self.dataset.df['image_f1'].mean()
-        print('The precision, recall and f1 score are:%0.4f, %0.4f, %0.4f'%
-                        (image_precision,image_recall,image_f1))
+        return image_predictions

@@ -22,7 +22,7 @@ def get_image_neighbors(df, embeddings, threshold=4, KNN=50):
 #     pdb.set_trace()
     del model, distances, indices
     gc.collect()  # ???
-    return df, predictions
+    return predictions
 
 # -------------------------------------------
 def score(y_true, y_pred):

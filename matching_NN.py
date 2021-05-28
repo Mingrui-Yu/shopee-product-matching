@@ -4,6 +4,7 @@ import random
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
+import matplotlib.pyplot as plt
 
 import albumentations
 from albumentations.pytorch.transforms import ToTensorV2
@@ -16,15 +17,9 @@ from torch.nn import functional as F
 from torch.utils.data import Dataset,DataLoader
 
 import gc
-import matplotlib.pyplot as plt
-import cudf
-import cuml
-import cupy
-from cuml.feature_extraction.text import TfidfVectorizer
-from cuml import PCA
-from cuml.neighbors import NearestNeighbors
-from sklearn.model_selection import StratifiedKFold
 import pdb
+
+import utils
 
 # ----------------------------------------------------------------------
 class Params:
@@ -37,6 +32,7 @@ class Params:
     num_workers = 4
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     # model_path = '../input/utils-shopee/arcface_512x512_tf_efficientnet_b4_LR.pt'
+    need_calc_embeddings = True
 
 
 
@@ -177,3 +173,14 @@ class MatchingNN(object):
         del embeds
         gc.collect()
         return image_embeddings
+
+    def getPrediction(self):
+        need_calc_embeddings = Params.need_calc_embeddings
+        if need_calc_embeddings: # 计算并保存
+            image_embeddings = self.getImageEmbeddings()
+            torch.save(image_embeddings, './image_embeddings.pt')
+        else: # 加载之前计算好保存的
+            image_embeddings = torch.load('./image_embeddings.pt')
+        image_predictions = utils.get_image_neighbors(self.dataset.df, image_embeddings, threshold=4, KNN=50 if len(self.dataset.df)>3 else 3)
+
+        return image_predictions
