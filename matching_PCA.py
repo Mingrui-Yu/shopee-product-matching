@@ -14,22 +14,29 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 
+# ----------------------------------------------------------------------
+class Params:
+    batch_size = 2048
+    num_workers = 4
+    n_components = 200
+
+
+# ----------------------------------------------------------------------
 class MatchingPCA(object):
 
-    def __init__(self, dataset, image_shape, n_components):
+    def __init__(self, dataset, image_shape):
         self.dataset = dataset # dataset is an object of class DatasetPreparation
         self.image_shape = image_shape
-        self.n_components = n_components
-        self.batch_size = 2048
-        self.image_num =  dataset.image_num
+        self.n_components = Params.n_components
+        self.batch_size = Params.batch_size
+        self.image_num =  dataset.image_list.shape[0]
 
 
     def main(self):
-
         image_loader = torch.utils.data.DataLoader(
             self.dataset.image_dataset,
             batch_size=self.batch_size,
-            num_workers=4
+            num_workers=Params.num_workers
         )
 
         name = 'iPCA'
@@ -52,7 +59,6 @@ class MatchingPCA(object):
             data_reduced[idx : next_idx, :] = data_reduced_batch
             idx = next_idx
             
-
         # Show the quality of reduction    
         print('There are %d components.'% estimator.n_components_)
         print('The variance ratio of the largest %d components: %0.4f'%

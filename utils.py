@@ -6,12 +6,11 @@ import gc
 
 
 # ------------------------------------------
-def get_image_neighbors(df, embeddings, KNN=50):
+def get_image_neighbors(df, embeddings, threshold=4, KNN=50):
 
     model = NearestNeighbors(n_neighbors = KNN)
     model.fit(embeddings)
     distances, indices = model.kneighbors(embeddings)
-    threshold = 4
     predictions = []
     for k in tqdm(range(embeddings.shape[0])):
         idx = np.where(distances[k,] < threshold)[0]

@@ -1,5 +1,6 @@
 shopee-product-matching
 *.pt
+*.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
