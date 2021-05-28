@@ -24,6 +24,7 @@ import cupy
 from cuml.feature_extraction.text import TfidfVectorizer
 from cuml import PCA
 from cuml.neighbors import NearestNeighbors
+from sklearn.model_selection import StratifiedKFold
 import pdb
 
 from matching_PCA import MatchingPCA
@@ -179,7 +180,7 @@ class DatasetPreparation(object):
         self.df = pd.read_csv('./shopee-product-matching/train.csv')
         self.df_cu = cudf.DataFrame(self.df)
         self.image_paths = './shopee-product-matching/train_images/' + self.df['image']
-        self.image_num = 34250
+        self.image_num = 34250 # 后面分数据的时候会改动
 
     def addMatchesGroundTruth(self):
         tmp = self.df.groupby(['label_group'])['posting_id'].unique().to_dict()
@@ -187,31 +188,97 @@ class DatasetPreparation(object):
         self.df['matches'] = self.df['matches'].apply(lambda x: ' '.join(x))
         print(self.df.head())
 
-    def loadImageDataset(self):
+    def loadImageDataset(self):# 这个函数之后需要整合一下 因为分类之后不存在image_dataset 会有training_dataset和valid_dataset
         transforms = albumentations.Compose([
                 albumentations.Resize(CFG.img_size, CFG.img_size, always_apply=True),
                 albumentations.Normalize(),
                 ToTensorV2(p=1.0)])
         self.image_dataset = ImageDataset(self.image_paths, self.image_num, transforms)
+
+    def addSplits(self, valid_group=0):
+        '''
+        总共分成5组,valid_group指定第几组是验证集
+        训练集在self.training_dataset
+        验证集在self.valid_dataset
+        '''
+        grouped = self.df.groupby('label_group').size()
+        # print(grouped)
+
+        labels, sizes =grouped.index.to_list(), grouped.to_list()
+
+        # print('group index to list',labels)
+
+        skf = StratifiedKFold(5)
+        splits = list(skf.split(labels, sizes))
+
+        group_to_split =  dict()
+        for idx in range(5):
+            labs = np.array(labels)[splits[idx][1]]
+            group_to_split.update(dict(zip(labs, [idx]*len(labs))))
+
+        self.df['split'] = self.df.label_group.replace(group_to_split)
+        self.df['is_valid'] = self.df['split'] == valid_group
+
+        print(self.df)
+
+        transforms = albumentations.Compose([
+                albumentations.Resize(CFG.img_size, CFG.img_size, always_apply=True),
+                albumentations.Normalize(),
+                ToTensorV2(p=1.0)])
+
+        self.training_image_paths = './shopee-product-matching/train_images/' + self.df[self.df['is_valid']==False]['image']
+        self.valid_image_paths = './shopee-product-matching/train_images/' + self.df[self.df['is_valid']==True]['image']
+        self.image_num = len(self.training_image_paths)
+        self.training_dataset = ImageDataset(self.training_image_paths,self.image_num, transforms)
+        self.image_num = len(self.valid_image_paths)
+        self.valid_dataset = ImageDataset(self.valid_image_paths,self.image_num, transforms)
+        print('The training and validation datasets are now available!!!\n %d images in tarin and %d images in valid'%(len(self.training_image_paths),len(self.valid_image_paths)))
+
+        return self.df
+
+    def addSplits_no2inValid(self, valid_group=0):
+        '''
+        验证集中没有2个的，2个的全在训练集
+        总共分成5组,valid_group指定第几组是验证集
+        训练集在self.training_dataset
+        验证集在self.valid_dataset
+        '''
+        self.df['matches_num'] = self.df['matches'].apply(lambda x: x.count('train_')).values
+
+        grouped = self.df[self.df['matches_num']>2].groupby('label_group').size()
+        # print(grouped)
+        labels, sizes =grouped.index.to_list(), grouped.to_list()
+        # print('group index to list',labels)
+
+        skf = StratifiedKFold(5)
+        splits = list(skf.split(labels, sizes))
+
+        group_to_split =  dict()
+        for idx in range(5):
+            labs = np.array(labels)[splits[idx][1]]
+            group_to_split.update(dict(zip(labs, [idx]*len(labs))))
+        # print(group_to_split)
+
+        self.df['split'] = self.df['label_group'].map(group_to_split)# 这一步之后，matches_num=2的split列都会变成NaN
+
+        self.df['is_valid'] = self.df['split'] == valid_group
+        print(self.df)
+
+        transforms = albumentations.Compose([
+                albumentations.Resize(CFG.img_size, CFG.img_size, always_apply=True),
+                albumentations.Normalize(),
+                ToTensorV2(p=1.0)])
+
+        self.training_image_paths = './shopee-product-matching/train_images/' + self.df[self.df['is_valid']==False]['image']
+        self.valid_image_paths = './shopee-product-matching/train_images/' + self.df[self.df['is_valid']==True]['image']
+        self.image_num = len(self.training_image_paths)
+        self.training_dataset = ImageDataset(self.training_image_paths,self.image_num, transforms)
+        self.image_num = len(self.valid_image_paths)
+        self.valid_dataset = ImageDataset(self.valid_image_paths,self.image_num, transforms)
+        print('The training and validation datasets are now available!!!\n %d images in tarin and %d images in valid'%(len(self.training_image_paths),len(self.valid_image_paths)))
         
-    def add_splits(self, train_df, valid_group=0):
-            grouped = self.df.groupby('label_group').size()
+        return self.df
 
-            print(grouped)
-            # labels, sizes =grouped.index.to_list(), grouped.to_list()
-
-            # skf = StratifiedKFold(5)
-            # splits = list(skf.split(labels, sizes))
-
-            # group_to_split =  dict()
-            # for idx in range(5):
-            #     labs = np.array(labels)[splits[idx][1]]
-            #     group_to_split.update(dict(zip(labs, [idx]*len(labs))))
-
-            # train_df['split'] = train_df.label_group.replace(group_to_split)
-            # train_df['is_valid'] = train_df['split'] == valid_group
-            # return train_df
-        
 
 # ----------------------------------------------------------------------
 class MatchMethod(object):
@@ -256,7 +323,8 @@ if __name__ == '__main__':
     shopee_data.loadImageDataset()
 
     print("finish data preparation.")
-     
+
+    ## efficientnet 
     # matcher = MatchMethod(shopee_data)
     # need_calc_embeddings = True
     # if need_calc_embeddings: # 计算并保存
@@ -265,7 +333,12 @@ if __name__ == '__main__':
     # else: # 加载之前计算好保存的
     #     image_embeddings = torch.load('./image_embeddings.pt')
 
-    n_components = 200
-    image_shape = (3, CFG.img_size, CFG.img_size)
-    matcher = MatchingPCA(shopee_data, image_shape, n_components)
-    matcher.main()
+    ## PCA
+    # n_components = 200
+    # image_shape = (3, CFG.img_size, CFG.img_size)
+    # matcher = MatchingPCA(shopee_data, image_shape, n_components)
+    # matcher.main()
+
+    ## 验证数据集分割
+    shopee_data.addSplits()
+    shopee_data.addSplits_no2inValid()

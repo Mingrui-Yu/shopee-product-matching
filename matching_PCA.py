@@ -54,7 +54,7 @@ class MatchingPCA(object):
             
 
         # Show the quality of reduction    
-        print('There are %d components.', estimator.n_components_)
+        print('There are %d components.'% estimator.n_components_)
         print('The variance ratio of the largest %d components: %0.4f'%
             (estimator.n_components_, sum(estimator.explained_variance_ratio_)))
 
