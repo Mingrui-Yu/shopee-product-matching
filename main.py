@@ -8,6 +8,7 @@ from tqdm import tqdm
 
 import albumentations
 from albumentations.pytorch.transforms import ToTensorV2
+from albumentations.augmentations.transforms import ToGray
 
 import torch
 import torch.nn as nn
@@ -29,6 +30,8 @@ import pdb
 from matching_PCA import MatchingPCA
 from matching_NN import MatchingNN
 from matching_Bert import MatchingBert
+from matching_SIFT import MatchingSIFT
+from matching_SIFT_opencv import MatchingSIFTopencv
 import tf_idf
 import utils
 
@@ -36,6 +39,7 @@ import utils
 # ----------------------------------------------------------------------
 class GlobalParams:
     img_size = 64 # reize the original image to img_size * img_size
+    n_channel = 1 # 3 if color, 1 if gray
 
 
 
@@ -56,7 +60,10 @@ class ImageDataset(Dataset):
         if self.augmentations:
             augmented = self.augmentations(image=image)
             image = augmented['image']
-        
+
+        if GlobalParams.n_channel == 1:
+            image = image[0, :, :]
+
         return image, torch.tensor(1)
 
 
@@ -83,40 +90,34 @@ class ShopeeDataset(object):
         transforms = albumentations.Compose([
                 albumentations.Resize(GlobalParams.img_size, GlobalParams.img_size, always_apply=True),
                 albumentations.Normalize(),
+                ToGray(p=1.0),
                 ToTensorV2(p=1.0)])
         self.image_dataset = ImageDataset(self.image_paths, transforms)
 
 
     def loadImageDataset_train_test(self):# 这个函数之后需要整合一下 因为分类之后不存在image_dataset 会有training_image_dataset和testing_image_dataset
-<<<<<<< HEAD
         '''
         训练和测试数据集。图片在training_image_dataset和testing_image_dataset
         '''        
-        transforms = albumentations.Compose([
+        if GlobalParams.n_channel == 3:
+            transforms = albumentations.Compose([
                 albumentations.Resize(GlobalParams.img_size, GlobalParams.img_size, always_apply=True),
                 albumentations.Normalize(),
                 ToTensorV2(p=1.0)])
+        else:
+            transforms = albumentations.Compose([
+                albumentations.Resize(GlobalParams.img_size, GlobalParams.img_size, always_apply=True),
+                albumentations.Normalize(),
+                ToGray(p=1.0),
+                ToTensorV2(p=1.0)])
+
+        self.image_dataset = ImageDataset(self.image_paths, transforms)
         self.training_image_dataset = ImageDataset(self.training_image_paths, transforms)
         self.testing_image_dataset = ImageDataset(self.testing_image_paths, transforms)
 
 
     def addSplits(self, test_group=0):
         '''
-=======
-        '''
-        训练和测试数据集。图片在training_image_dataset和testing_image_dataset
-        '''        
-        transforms = albumentations.Compose([
-                albumentations.Resize(GlobalParams.img_size, GlobalParams.img_size, always_apply=True),
-                albumentations.Normalize(),
-                ToTensorV2(p=1.0)])
-        self.training_image_dataset = ImageDataset(self.training_image_paths, transforms)
-        self.testing_image_dataset = ImageDataset(self.testing_image_paths, transforms)
-
-
-    def addSplits(self, test_group=0):
-        '''
->>>>>>> d6571ee28bc41a14baa009d09df369960b8cdc2a
         总共分成5组,test_group指定第几组是验证集
         训练集在self.training_image_dataset
         验证集在self.test_dataset
@@ -222,8 +223,7 @@ class ShopeeDataset(object):
         # print("!!!!!!!!!!!!!!!", self.training_image_paths[11])
         self.testing_image_paths = './shopee-product-matching/train_images/' + self.df_testing['image']
         
-        self.loadImageDataset_train_test()
-        print('The training and testing datasets are now available!!!\n %d images in train and %d images in test'%(len(self.training_image_paths),len(self.testing_image_paths)))
+        
 
 
 
@@ -234,7 +234,10 @@ if __name__ == '__main__':
     shopee_data = ShopeeDataset()
     shopee_data.readDataCsv()
     shopee_data.addMatchesGroundTruth()
-    shopee_data.loadImageDataset()
+    # shopee_data.loadImageDataset()
+    shopee_data.addSplits_no2inTest()
+    shopee_data.loadImageDataset_train_test()
+    # print('The training and testing datasets are now available!!!\n %d images in train and %d images in test'%(len(self.training_image_paths),len(self.testing_image_paths)))
 
     print("finish data preparation.")
 
@@ -266,16 +269,16 @@ if __name__ == '__main__':
     # joint_f1 = shopee_data.df['joint_f1'].mean()
     # print(joint_precision,joint_recall,joint_f1)
 
-    # PCA
-    image_shape = (3, GlobalParams.img_size, GlobalParams.img_size)
-    matcher = MatchingPCA(shopee_data, image_shape)
-    shopee_data.df['image_predictions'] =  matcher.getPrediction()
-    shopee_data.df['image_precision'],  shopee_data.df['image_recall'],  shopee_data.df['image_f1'] \
-            = utils.score( shopee_data.df['matches'],  shopee_data.df['image_predictions'])
-    image_precision =  shopee_data.df['image_precision'].mean()
-    image_recall =  shopee_data.df['image_recall'].mean()
-    image_f1 =  shopee_data.df['image_f1'].mean()
-    print(image_precision,image_recall,image_f1)
+    # # PCA
+    # image_shape = (GlobalParams.n_channel, GlobalParams.img_size, GlobalParams.img_size)
+    # matcher = MatchingPCA(shopee_data, image_shape)
+    # shopee_data.df['image_predictions'] =  matcher.getPrediction()
+    # shopee_data.df['image_precision'],  shopee_data.df['image_recall'],  shopee_data.df['image_f1'] \
+    #         = utils.score( shopee_data.df['matches'],  shopee_data.df['image_predictions'])
+    # image_precision =  shopee_data.df['image_precision'].mean()
+    # image_recall =  shopee_data.df['image_recall'].mean()
+    # image_f1 =  shopee_data.df['image_f1'].mean()
+    # print(image_precision,image_recall,image_f1)
 
     # # Bert
     # matcher = MatchingBert(shopee_data)
@@ -289,14 +292,36 @@ if __name__ == '__main__':
     # print(image_precision,image_recall,image_f1)
 
 
-    # PCA 在训练集和测试集上跑的版本
-    shopee_data.addSplits_no2inTest()
-    image_shape = (3, GlobalParams.img_size, GlobalParams.img_size)
-    matcher = MatchingPCA(shopee_data, image_shape)
-    shopee_data.df_testing['image_predictions'] =  matcher.getPrediction_testDataset()
-    shopee_data.df_testing['image_precision'],  shopee_data.df_testing['image_recall'],  shopee_data.df_testing['image_f1'] \
-            = utils.score( shopee_data.df_testing['matches'],  shopee_data.df_testing['image_predictions'])
-    image_precision =  shopee_data.df_testing['image_precision'].mean()
-    image_recall =  shopee_data.df_testing['image_recall'].mean()
-    image_f1 =  shopee_data.df_testing['image_f1'].mean()
+    # # PCA 在训练集和测试集上跑的版本
+    # shopee_data.addSplits_no2inTest()
+    # image_shape = (GlobalParams.n_channel, GlobalParams.img_size, GlobalParams.img_size)
+    # matcher = MatchingPCA(shopee_data, image_shape)
+    # shopee_data.df_testing['image_predictions'] =  matcher.getPrediction_testDataset()
+    # shopee_data.df_testing['image_precision'],  shopee_data.df_testing['image_recall'],  shopee_data.df_testing['image_f1'] \
+    #         = utils.score( shopee_data.df_testing['matches'],  shopee_data.df_testing['image_predictions'])
+    # image_precision =  shopee_data.df_testing['image_precision'].mean()
+    # image_recall =  shopee_data.df_testing['image_recall'].mean()
+    # image_f1 =  shopee_data.df_testing['image_f1'].mean()
+    # print(image_precision,image_recall,image_f1)
+
+
+    # # SIFT using kornia
+    # image_shape = (GlobalParams.n_channel, GlobalParams.img_size, GlobalParams.img_size)
+    # matcher = MatchingSIFT(shopee_data, image_shape)
+    # shopee_data.df['image_predictions'] =  matcher.getPrediction()
+    # shopee_data.df['image_precision'],  shopee_data.df['image_recall'],  shopee_data.df['image_f1'] \
+    #         = utils.score( shopee_data.df['matches'],  shopee_data.df['image_predictions'])
+    # image_precision =  shopee_data.df['image_precision'].mean()
+    # image_recall =  shopee_data.df['image_recall'].mean()
+    # image_f1 =  shopee_data.df['image_f1'].mean()
+    # print(image_precision,image_recall,image_f1)
+
+    # SIFT using opencv
+    matcher = MatchingSIFTopencv(shopee_data)
+    shopee_data.df['image_predictions'] =  matcher.getPrediction()
+    shopee_data.df['image_precision'],  shopee_data.df['image_recall'],  shopee_data.df['image_f1'] \
+            = utils.score( shopee_data.df['matches'],  shopee_data.df['image_predictions'])
+    image_precision =  shopee_data.df['image_precision'].mean()
+    image_recall =  shopee_data.df['image_recall'].mean()
+    image_f1 =  shopee_data.df['image_f1'].mean()
     print(image_precision,image_recall,image_f1)
