@@ -88,6 +88,7 @@ class ShopeeDataset(object):
 
 
     def loadImageDataset_train_test(self):# 这个函数之后需要整合一下 因为分类之后不存在image_dataset 会有training_image_dataset和testing_image_dataset
+<<<<<<< HEAD
         '''
         训练和测试数据集。图片在training_image_dataset和testing_image_dataset
         '''        
@@ -101,6 +102,21 @@ class ShopeeDataset(object):
 
     def addSplits(self, test_group=0):
         '''
+=======
+        '''
+        训练和测试数据集。图片在training_image_dataset和testing_image_dataset
+        '''        
+        transforms = albumentations.Compose([
+                albumentations.Resize(GlobalParams.img_size, GlobalParams.img_size, always_apply=True),
+                albumentations.Normalize(),
+                ToTensorV2(p=1.0)])
+        self.training_image_dataset = ImageDataset(self.training_image_paths, transforms)
+        self.testing_image_dataset = ImageDataset(self.testing_image_paths, transforms)
+
+
+    def addSplits(self, test_group=0):
+        '''
+>>>>>>> d6571ee28bc41a14baa009d09df369960b8cdc2a
         总共分成5组,test_group指定第几组是验证集
         训练集在self.training_image_dataset
         验证集在self.test_dataset
@@ -271,7 +287,6 @@ if __name__ == '__main__':
     # image_recall =  shopee_data.df['image_recall'].mean()
     # image_f1 =  shopee_data.df['image_f1'].mean()
     # print(image_precision,image_recall,image_f1)
-    
 
 
     # PCA 在训练集和测试集上跑的版本
