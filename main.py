@@ -30,12 +30,13 @@ import pdb
 from matching_PCA import MatchingPCA
 from matching_NN import MatchingNN
 import tf_idf
+import count
 import utils
 
 
 # ----------------------------------------------------------------------
 class GlobalParams:
-    img_size = 64 # reize the original image to img_size * img_size
+    img_size = 512 # reize the original image to img_size * img_size
 
 
 
@@ -186,23 +187,35 @@ if __name__ == '__main__':
     image_f1 =  shopee_data.df['image_f1'].mean()
     print(image_precision,image_recall,image_f1)
 
-    # text using tf_idf
-    shopee_data.df['text_predictions'] = tf_idf.getTextPredictions(shopee_data.df, max_features=25000)
-    shopee_data.df['text_precision'],shopee_data. df['text_recall'], shopee_data.df['text_f1'] \
-            = utils.score(shopee_data.df['matches'], shopee_data.df['text_predictions'])
-    text_precision = shopee_data.df['text_precision'].mean()
-    text_recall = shopee_data.df['text_recall'].mean()
-    text_f1 = shopee_data.df['text_f1'].mean()
-    print(text_precision, text_recall, text_f1)
+    # # text using tf_idf
+    # shopee_data.df['text_predictions'] = tf_idf.getTextPredictions(shopee_data.df, max_features=25000)
+    # shopee_data.df['text_precision'],shopee_data. df['text_recall'], shopee_data.df['text_f1'] \
+    #         = utils.score(shopee_data.df['matches'], shopee_data.df['text_predictions'])
+    # text_precision = shopee_data.df['text_precision'].mean()
+    # text_recall = shopee_data.df['text_recall'].mean()
+    # text_f1 = shopee_data.df['text_f1'].mean()
+    # print(text_precision, text_recall, text_f1)
 
-    # combine image and text
-    shopee_data.df['joint_predictions'] = shopee_data.df.apply(utils.combine_predictions, axis=1)
-    shopee_data.df['joint_precision'], shopee_data.df['joint_recall'], shopee_data.df['joint_f1'] \
-            = utils.score(shopee_data.df['matches'], shopee_data.df['joint_predictions'])
-    joint_precision = shopee_data.df['joint_precision'].mean()
-    joint_recall = shopee_data.df['joint_recall'].mean()
-    joint_f1 = shopee_data.df['joint_f1'].mean()
-    print(joint_precision,joint_recall,joint_f1)
+    # # text using count
+    # shopee_data.df['text_predictions'] = count.getTextPredictions(shopee_data.df, max_features=25000)
+    # shopee_data.df['text_precision'],shopee_data. df['text_recall'], shopee_data.df['text_f1'] \
+    #         = utils.score(shopee_data.df['matches'], shopee_data.df['text_predictions'])
+    # text_precision = shopee_data.df['text_precision'].mean()
+    # text_recall = shopee_data.df['text_recall'].mean()
+    # text_f1 = shopee_data.df['text_f1'].mean()
+    # print(text_precision, text_recall, text_f1)
+
+
+
+
+    # # combine image and text
+    # shopee_data.df['joint_predictions'] = shopee_data.df.apply(utils.combine_predictions, axis=1)
+    # shopee_data.df['joint_precision'], shopee_data.df['joint_recall'], shopee_data.df['joint_f1'] \
+    #         = utils.score(shopee_data.df['matches'], shopee_data.df['joint_predictions'])
+    # joint_precision = shopee_data.df['joint_precision'].mean()
+    # joint_recall = shopee_data.df['joint_recall'].mean()
+    # joint_f1 = shopee_data.df['joint_f1'].mean()
+    # print(joint_precision,joint_recall,joint_f1)
 
     # # PCA
     # image_shape = (3, GlobalParams.img_size, GlobalParams.img_size)
