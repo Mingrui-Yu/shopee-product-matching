@@ -18,7 +18,7 @@ from torch.utils.data import Dataset,DataLoader
 
 import gc
 import pdb
-
+from collections import OrderedDict
 import utils
 
 # reference: https://www.kaggle.com/vatsalmavani/eff-b4-tfidf-0-728
@@ -30,11 +30,11 @@ class Params:
     model_name =  'tf_efficientnet_b4'
     fc_dim = 512
     scale = 30 
-    batch_size = 1024
+    batch_size = 24
     num_workers = 4
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    # model_path = '../input/utils-shopee/arcface_512x512_tf_efficientnet_b4_LR.pt'
-    need_calc_embeddings = False
+    model_path = './model1/arcface_512x512_tf_efficientnet_b4_checkpoints.pt'
+    need_calc_embeddings = True
 
 
 
@@ -153,7 +153,19 @@ class MatchingNN(object):
         self.dataset = dataset
 
     def getImageEmbeddings(self):
-        model = ShopeeModel(pretrained=True).to(Params.device)
+        # model = ShopeeModel(pretrained=True).to(Params.device)
+
+        model = ShopeeModel(pretrained=False)
+        checkpoint = torch.load(Params.model_path, map_location='cpu')
+
+        state_dict = checkpoint['model_state_dict']
+        new_state_dict = OrderedDict()
+        for k, v in state_dict.items():
+            name = k[7:]
+            new_state_dict[name] = v
+        model.load_state_dict(new_state_dict, strict=True)
+        model = model.to(Params.device)
+
         model.eval()
 
         image_loader = torch.utils.data.DataLoader(
