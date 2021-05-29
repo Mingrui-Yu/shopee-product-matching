@@ -21,6 +21,8 @@ import pdb
 
 import utils
 
+# reference: https://www.kaggle.com/vatsalmavani/eff-b4-tfidf-0-728
+
 # ----------------------------------------------------------------------
 class Params:
     classes = 11014 
