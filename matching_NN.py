@@ -152,6 +152,7 @@ class MatchingNN(object):
     def __init__(self, dataset):
         self.dataset = dataset
 
+    ## 以下两个函数是在全数据集上用的
     def getImageEmbeddings(self):
         # model = ShopeeModel(pretrained=True).to(Params.device)
 
@@ -198,5 +199,43 @@ class MatchingNN(object):
         else: # 加载之前计算好保存的
             image_embeddings = torch.load('./image_embeddings.pt')
         image_predictions = utils.get_image_neighbors(self.dataset.df, image_embeddings, threshold=4, KNN=50 if len(self.dataset.df)>3 else 3)
+
+        return image_predictions
+
+    ## 以下两个函数是为了在测试集上跑而写的    
+    def getImageEmbeddings_test(self):
+        model = ShopeeModel(pretrained=True).to(Params.device)
+        model.eval()
+
+        image_loader = torch.utils.data.DataLoader(
+            self.dataset.testing_image_dataset,
+            batch_size=Params.batch_size,
+            num_workers=Params.num_workers
+        )
+
+        embeds = []
+        with torch.no_grad():
+            for img, label in tqdm(image_loader): 
+                img = img.cuda()
+                label = label.cuda()
+                features = model(img, label)
+                image_embeddings = features.detach().cpu().numpy()
+                embeds.append(image_embeddings)
+
+        del model
+        image_embeddings = np.concatenate(embeds)
+        print(f'Our image embeddings shape is {image_embeddings.shape}')
+        del embeds
+        gc.collect()
+        return image_embeddings
+
+    def getPrediction_testDataset(self):
+        need_calc_embeddings = Params.need_calc_embeddings
+        if need_calc_embeddings: # 计算并保存
+            image_embeddings = self.getImageEmbeddings_test()
+            torch.save(image_embeddings, './image_embeddings_test.pt')
+        else: # 加载之前计算好保存的
+            image_embeddings = torch.load('./image_embeddings_test.pt')
+        image_predictions = utils.get_image_neighbors(self.dataset.df_testing, image_embeddings, threshold=4, KNN=50 if len(self.dataset.df)>3 else 3)
 
         return image_predictions
