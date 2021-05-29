@@ -3,5 +3,8 @@ matplotlib
 pandas
 tqdm
 opencv-python
+opencv-contrib-python
 albumentations
 timm
+transformers
+kornia
