@@ -115,6 +115,8 @@ class ShopeeDataset(object):
                 ToTensorV2(p=1.0)])
 
         self.image_dataset = ImageDataset(self.image_paths, transforms)
+=======
+>>>>>>> Stashed changes
         self.training_image_dataset = ImageDataset(self.training_image_paths, transforms)
         self.testing_image_dataset = ImageDataset(self.testing_image_paths, transforms)
 
@@ -300,6 +302,9 @@ if __name__ == '__main__':
     # # PCA
 <<<<<<< Updated upstream
     # image_shape = (GlobalParams.n_channel, GlobalParams.img_size, GlobalParams.img_size)
+=======
+    # image_shape = (3, GlobalParams.img_size, GlobalParams.img_size)
+>>>>>>> Stashed changes
     # matcher = MatchingPCA(shopee_data, image_shape)
     # shopee_data.df['image_predictions'] =  matcher.getPrediction()
     # shopee_data.df['image_precision'],  shopee_data.df['image_recall'],  shopee_data.df['image_f1'] \
@@ -325,6 +330,9 @@ if __name__ == '__main__':
     # shopee_data.addSplits_no2inTest()
 <<<<<<< Updated upstream
     # image_shape = (GlobalParams.n_channel, GlobalParams.img_size, GlobalParams.img_size)
+=======
+    # image_shape = (3, GlobalParams.img_size, GlobalParams.img_size)
+>>>>>>> Stashed changes
     # matcher = MatchingPCA(shopee_data, image_shape)
     # shopee_data.df_testing['image_predictions'] =  matcher.getPrediction_testDataset()
     # shopee_data.df_testing['image_precision'],  shopee_data.df_testing['image_recall'],  shopee_data.df_testing['image_f1'] \
