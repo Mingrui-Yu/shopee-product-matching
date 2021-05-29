@@ -151,6 +151,8 @@ class MatchingBert(object):
 
 
 if __name__ == '__main__':
+    m = 1
+
     # Bert
     # matcher = MatchingBert(shopee_data)
     # # matcher.test()
