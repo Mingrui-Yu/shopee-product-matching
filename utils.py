@@ -34,6 +34,12 @@ def score(y_true, y_pred):
     precision = intersection/len_y_pred
     recall = intersection/len_y_true
     f1 = 2 * intersection / (len_y_pred + len_y_true)
+
+    print(y_true[0])
+    print(y_pred[0])
+
+
+
     return precision,recall,f1
 
 

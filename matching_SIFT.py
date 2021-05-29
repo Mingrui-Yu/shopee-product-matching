@@ -66,6 +66,7 @@ class MatchingSIFT(object):
 
 
 if __name__ == "__main__":
+    m = 1
     # # SIFT using kornia
     # image_shape = (GlobalParams.n_channel, GlobalParams.img_size, GlobalParams.img_size)
     # matcher = MatchingSIFT(shopee_data, image_shape)
