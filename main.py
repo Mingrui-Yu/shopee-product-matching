@@ -106,6 +106,7 @@ class ShopeeDataset(object):
                 albumentations.Resize(GlobalParams.img_size, GlobalParams.img_size, always_apply=True),
                 albumentations.Normalize(),
                 ToTensorV2(p=1.0)])
+<<<<<<< Updated upstream
         else:
             transforms = albumentations.Compose([
                 albumentations.Resize(GlobalParams.img_size, GlobalParams.img_size, always_apply=True),
@@ -254,6 +255,17 @@ if __name__ == '__main__':
     print(image_precision,image_recall,image_f1)
 
 
+    # efficientnet 在训练集测试集上的版本
+    shopee_data.addSplits_no2inTest()
+    matcher = MatchingNN(shopee_data)
+    shopee_data.df_testing['image_predictions'] = matcher.getPrediction_testDataset()
+    shopee_data.df_testing['image_precision'],  shopee_data.df_testing['image_recall'],  shopee_data.df_testing['image_f1'] \
+            = utils.score( shopee_data.df_testing['matches'],  shopee_data.df_testing['image_predictions'])
+    image_precision =  shopee_data.df_testing['image_precision'].mean()
+    image_recall =  shopee_data.df_testing['image_recall'].mean()
+    image_f1 =  shopee_data.df_testing['image_f1'].mean()
+    print(image_precision,image_recall,image_f1)
+
     # # text using tf_idf
     # shopee_data.df['text_predictions'] = tf_idf.getTextPredictions(shopee_data.df, max_features=25000)
     # shopee_data.df['text_precision'],shopee_data. df['text_recall'], shopee_data.df['text_f1'] \
@@ -286,6 +298,7 @@ if __name__ == '__main__':
     # print(joint_precision,joint_recall,joint_f1)
 
     # # PCA
+<<<<<<< Updated upstream
     # image_shape = (GlobalParams.n_channel, GlobalParams.img_size, GlobalParams.img_size)
     # matcher = MatchingPCA(shopee_data, image_shape)
     # shopee_data.df['image_predictions'] =  matcher.getPrediction()
@@ -310,6 +323,7 @@ if __name__ == '__main__':
 
     # # PCA 在训练集和测试集上跑的版本
     # shopee_data.addSplits_no2inTest()
+<<<<<<< Updated upstream
     # image_shape = (GlobalParams.n_channel, GlobalParams.img_size, GlobalParams.img_size)
     # matcher = MatchingPCA(shopee_data, image_shape)
     # shopee_data.df_testing['image_predictions'] =  matcher.getPrediction_testDataset()
@@ -318,6 +332,7 @@ if __name__ == '__main__':
     # image_precision =  shopee_data.df_testing['image_precision'].mean()
     # image_recall =  shopee_data.df_testing['image_recall'].mean()
     # image_f1 =  shopee_data.df_testing['image_f1'].mean()
+<<<<<<< Updated upstream
     # print(image_precision,image_recall,image_f1)
 
 
@@ -341,3 +356,6 @@ if __name__ == '__main__':
     image_recall =  shopee_data.df['image_recall'].mean()
     image_f1 =  shopee_data.df['image_f1'].mean()
     print(image_precision,image_recall,image_f1)
+=======
+    # print(image_precision,image_recall,image_f1)
+>>>>>>> Stashed changes
