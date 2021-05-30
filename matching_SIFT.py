@@ -29,6 +29,41 @@ class MatchingSIFT(object):
             print("Error: input must be gray image with 1 channel !")
             return
 
+    # 测试集！！！
+    def getImageEmbeddings_test(self):
+        image_loader = torch.utils.data.DataLoader(
+            self.dataset.testing_image_dataset,
+            batch_size=Params.batch_size,
+            num_workers=Params.num_workers
+        )
+
+        SIFT = SIFTDescriptor(self.image_shape[1], 8, 4)
+
+        descs = np.empty((self.dataset.df_testing.shape[0], 128))
+        idx = 0
+        for img_batch, label in tqdm(image_loader): 
+            img_vector_batch = img_batch.reshape(-1, 1,  self.image_shape[1], self.image_shape[2])
+            next_idx = idx + img_vector_batch.shape[0]
+            descs_batch = SIFT(img_vector_batch) # 23x128
+            descs[idx : next_idx, :] = descs_batch.detach().cpu().numpy()
+            idx = next_idx
+        return descs
+
+    def getPrediction_test(self):
+        need_calc_embeddings = Params.need_calc_embeddings
+        if need_calc_embeddings: # 计算并保存
+            image_embeddings = self.getImageEmbeddings_test()
+            np.save('./sift_image_embeddings.npy', image_embeddings)
+        else: # 加载之前计算好保存的
+            image_embeddings = np.load('./sift_image_embeddings.npy')
+        
+        image_predictions = utils.get_image_neighbors(self.dataset.df_testing, image_embeddings, threshold=0.17, \
+                                KNN=50 if len(self.dataset.df_testing)>3 else 3)
+
+        return image_predictions
+
+
+    # 全数据集
     def getImageEmbeddings(self):
         image_loader = torch.utils.data.DataLoader(
             self.dataset.image_dataset,

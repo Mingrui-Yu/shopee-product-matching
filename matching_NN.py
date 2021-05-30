@@ -33,7 +33,7 @@ class Params:
     batch_size = 24
     num_workers = 4
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    model_path = './arcface_512x512_tf_efficientnet_b4_checkpoints.pt'
+    model_path = './model1/arcface_512x512_tf_efficientnet_b4_checkpoints.pt'
     need_calc_embeddings = True
 
 

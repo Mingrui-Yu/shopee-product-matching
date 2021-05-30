@@ -1,4 +1,5 @@
 import os
+# os.environ["CUDA_VISIBLE_DEVICES"] = "9"
 import cv2
 import math
 import random
@@ -36,11 +37,10 @@ import tf_idf
 import count
 import utils
 
-
 # ----------------------------------------------------------------------
 class GlobalParams:
-    img_size = 512 # reize the original image to img_size * img_size
-    n_channel = 3 # 3 if color, 1 if gray
+    img_size = 64 # reize the original image to img_size * img_size
+    n_channel = 1 # 3 if color, 1 if gray
 
 
 
@@ -122,7 +122,7 @@ class ShopeeDataset(object):
         '''
         总共分成5组,test_group指定第几组是验证集
         训练集在self.training_image_dataset
-        验证集在self.test_dataset
+        验证集在self.testing_image_dataset
         '''
         grouped = self.df.groupby('label_group').size()
         # print(grouped)
@@ -225,11 +225,14 @@ class ShopeeDataset(object):
 
 # ----------------------------------------------------------------------
 if __name__ == '__main__':
+
+
+
     shopee_data = ShopeeDataset()
     shopee_data.readDataCsv()
     shopee_data.addMatchesGroundTruth()
     shopee_data.loadImageDataset()
-    shopee_data.addSplits_no2inTest()
+    shopee_data.addSplits_no2inTest(test_group=1)
     shopee_data.loadImageDataset_train_test()
     # print('The training and testing datasets are now available!!!\n %d images in train and %d images in test'%(len(self.training_image_paths),len(self.testing_image_paths)))
 
@@ -247,15 +250,15 @@ if __name__ == '__main__':
 
 
     # # efficientnet 在训练集测试集上的版本
-    GlobalParams.img_size = 512 #然后别忘了把matching_NN里面的Params.batch_size改小一点，否则内存会超出
-    matcher = MatchingNN(shopee_data)
-    shopee_data.df_testing['image_predictions'] = matcher.getPrediction_testDataset()
-    shopee_data.df_testing['image_precision'],  shopee_data.df_testing['image_recall'],  shopee_data.df_testing['image_f1'] \
-            = utils.score( shopee_data.df_testing['matches'],  shopee_data.df_testing['image_predictions'])
-    image_precision =  shopee_data.df_testing['image_precision'].mean()
-    image_recall =  shopee_data.df_testing['image_recall'].mean()
-    image_f1 =  shopee_data.df_testing['image_f1'].mean()
-    print(image_precision,image_recall,image_f1)
+    # GlobalParams.img_size = 512 #注意要在全局里面改，因为前面数据处理已经用到了global然后别忘了把matching_NN里面的Params.batch_size改小一点，否则内存会超出
+    # matcher = MatchingNN(shopee_data)
+    # shopee_data.df_testing['image_predictions'] = matcher.getPrediction_testDataset()
+    # shopee_data.df_testing['image_precision'],  shopee_data.df_testing['image_recall'],  shopee_data.df_testing['image_f1'] \
+    #         = utils.score( shopee_data.df_testing['matches'],  shopee_data.df_testing['image_predictions'])
+    # image_precision =  shopee_data.df_testing['image_precision'].mean()
+    # image_recall =  shopee_data.df_testing['image_recall'].mean()
+    # image_f1 =  shopee_data.df_testing['image_f1'].mean()
+    # print(image_precision,image_recall,image_f1)
 
     # # text using tf_idf
     # shopee_data.df['text_predictions'] = tf_idf.getTextPredictions(shopee_data.df, max_features=25000)
@@ -274,7 +277,8 @@ if __name__ == '__main__':
     # text_recall = shopee_data.df_testing['text_recall'].mean()
     # text_f1 = shopee_data.df_testing['text_f1'].mean()
     # print(text_precision, text_recall, text_f1)
-    # # 0.9729123396058854 0.5233578231372081 0.6274635450792525  yxj05300910
+    # # 0.9729123396058854 0.5233578231372081 0.6274635450792525  yxj05300910 test_label=0
+    # # 0.9728739318863272 0.5142002427732281 0.6171707403072557 yxj05301334 test_label=1
 
 
     # # text using count
@@ -368,12 +372,25 @@ if __name__ == '__main__':
     # # SIFT using kornia
     # image_shape = (GlobalParams.n_channel, GlobalParams.img_size, GlobalParams.img_size)
     # matcher = MatchingSIFT(shopee_data, image_shape)
+    # # matcher = MatchingSIFT(shopee_data.image_dataset, shopee_data.df , image_shape)
     # shopee_data.df['image_predictions'] =  matcher.getPrediction()
     # shopee_data.df['image_precision'],  shopee_data.df['image_recall'],  shopee_data.df['image_f1'] \
     #         = utils.score( shopee_data.df['matches'],  shopee_data.df['image_predictions'])
     # image_precision =  shopee_data.df['image_precision'].mean()
     # image_recall =  shopee_data.df['image_recall'].mean()
     # image_f1 =  shopee_data.df['image_f1'].mean()
+    # print(image_precision,image_recall,image_f1)
+
+    # # # SIFT using kornia 在测试集上的版本
+    # image_shape = (GlobalParams.n_channel, GlobalParams.img_size, GlobalParams.img_size)
+    # matcher = MatchingSIFT(shopee_data, image_shape)
+    # # matcher = MatchingSIFT(shopee_data.image_dataset, shopee_data.df , image_shape)
+    # shopee_data.df_testing['image_predictions'] =  matcher.getPrediction_test()
+    # shopee_data.df_testing['image_precision'],  shopee_data.df_testing['image_recall'],  shopee_data.df_testing['image_f1'] \
+    #         = utils.score( shopee_data.df_testing['matches'],  shopee_data.df_testing['image_predictions'])
+    # image_precision =  shopee_data.df_testing['image_precision'].mean()
+    # image_recall =  shopee_data.df_testing['image_recall'].mean()
+    # image_f1 =  shopee_data.df_testing['image_f1'].mean()
     # print(image_precision,image_recall,image_f1)
 
     # # SIFT using opencv

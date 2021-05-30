@@ -21,9 +21,23 @@ Clone the repo:
 git clone https://github.com/Mingrui-Yu/shopee-product-matching.git
 ```
 
-Download the pretrained model to the folder:
+Download the Bert pretrained model to the folder:
+
 ```
 cd shopee-product-matching
-wget https://cloud.tsinghua.edu.cn/f/1914a30db3c942a2b2bd/?dl=1 -O models.zip
+wget https://cloud.tsinghua.edu.cn/f/1914a30db3c942a2b2bd/?dl=1 -O Bert_models.zip
 ```
+
 and then unzip the file.
+
+
+
+Download the efficientnet model **trained by HuangRui** to the folder:
+```
+cd shopee-product-matching
+wget https://cloud.tsinghua.edu.cn/f/b378be4ef2844d389ad4/?dl=1 -O acrface_models.zip
+```
+
+
+and then unzip the file.
+
