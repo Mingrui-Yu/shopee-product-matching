@@ -118,21 +118,22 @@ def embs_from_model(model, dl):
 
 # --------------------------------------------------------------------------------------------
 class MatchingBert(object):
-    def __init__(self, dataset):
-        self.dataset = dataset
+    def __init__(self, df):
+        # self.dataset = dataset
+        self.df = df
+        # self.image_dataset = dataset.train/test
 
     def test(self):
-        text_dataset = TextDataset(self.dataset.df)
+        text_dataset = TextDataset(self.df)
         print(text_dataset[0])
 
     def getTextEmbeddings(self):
         text_loader = torch.utils.data.DataLoader(
-            TextDataset(self.dataset.df),
+            TextDataset(self.df),
             batch_size=Params.batch_size,
             num_workers=Params.num_workers
         )
         bert_embs, ys = embs_from_model(load_bert_model(bert_model_file), text_loader)
-        # bert_embs, ys = embs_from_model(load_bert_model(bert_model_file), get_text_dls(self.dataset.df).valid)
         return bert_embs.detach().cpu().numpy()
 
     def getPrediction(self):
@@ -143,11 +144,10 @@ class MatchingBert(object):
         else: # 加载之前计算好保存的
             image_embeddings = np.load('./bert_text_embeddings.npy')
         
-        image_predictions = utils.get_image_neighbors(self.dataset.df, image_embeddings, threshold=0.5, \
-                                KNN=50 if len(self.dataset.df)>3 else 3)
+        image_predictions = utils.get_image_neighbors(self.df, image_embeddings, threshold=0.5, \
+                                KNN=50 if len(self.df)>3 else 3)
 
         return image_predictions
-
 
 
 if __name__ == '__main__':

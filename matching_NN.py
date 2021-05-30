@@ -33,7 +33,7 @@ class Params:
     batch_size = 24
     num_workers = 4
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    model_path = './model1/arcface_512x512_tf_efficientnet_b4_checkpoints.pt'
+    model_path = './arcface_512x512_tf_efficientnet_b4_checkpoints.pt'
     need_calc_embeddings = True
 
 
@@ -204,7 +204,20 @@ class MatchingNN(object):
 
     ## 以下两个函数是为了在测试集上跑而写的    
     def getImageEmbeddings_test(self):
-        model = ShopeeModel(pretrained=True).to(Params.device)
+
+        # model = ShopeeModel(pretrained=True).to(Params.device)
+
+        model = ShopeeModel(pretrained=False)
+        checkpoint = torch.load(Params.model_path, map_location='cpu')
+
+        state_dict = checkpoint['model_state_dict']
+        new_state_dict = OrderedDict()
+        for k, v in state_dict.items():
+            name = k[7:]
+            new_state_dict[name] = v
+        model.load_state_dict(new_state_dict, strict=True)
+        model = model.to(Params.device)
+
         model.eval()
 
         image_loader = torch.utils.data.DataLoader(
@@ -235,7 +248,7 @@ class MatchingNN(object):
             image_embeddings = self.getImageEmbeddings_test()
             torch.save(image_embeddings, './image_embeddings_test.pt')
         else: # 加载之前计算好保存的
-            image_embeddings = torch.load('./image_embeddings_test.pt')
+            image_embeddings = torch.load('./arcface_512x512_tf_efficientnet_b4_checkpoints.pt')
         image_predictions = utils.get_image_neighbors(self.dataset.df_testing, image_embeddings, threshold=4, KNN=50 if len(self.dataset.df)>3 else 3)
 
         return image_predictions
