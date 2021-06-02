@@ -49,18 +49,27 @@ and then unzip the file.
 
 shopee-product-matching
 ├── count.py: functions to get Text Predictions using words frequency
+
 ├── main.py: classes to prepare the data and main loop
+
 ├── matching_Bert.py: functions to get Text Predictions using BERT
+
 ├── matching_NN.py: classes and functions to predict the image using EfficientNet
+
 ├── matching_PCA.py: classes and functions to predict the image using PCA
+
 ├── matching_SIFT.py: classes and functions to predict the image using simplified SIFT
+
 ├── matching_SIFT_opencv.py: classes and functions to predict the image using SIFT (opencv)
+
 ├── ref_code.py: the code snippet we referred to. https://www.kaggle.com/vatsalmavani/eff-b4-tfidf-0-728#About-Notebook
+
 ├── ref_code2.py:the code snippet we refered to. https://www.kaggle.com/vatsalmavani/eff-b4-tfidf-0-728#About-Notebook
 
 ├── requirements.txt: environment requirements
 
 ├── tf_idf.py: classes and functions to get Text Predictions using TFIDF
+
 ├── train.py: code for training the EfficientNet on all dataset.
 
 ├── train_on_trainset.py: code for training the EfficientNet on training dataset.
