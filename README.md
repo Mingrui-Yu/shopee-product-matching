@@ -43,33 +43,9 @@ and then unzip the file.
 
 
 
-## 文件说明
-
-所有代码架构面向对象，要注意跑之前GlobalParam的设置和对应类文件中batch_size、生成embedding等设置！
-
-main.py主文件，将其中对应部分取消注释即可运行程序
-
-matching_PCA.py为PCA类、函数
-
-matching_SIFT.py为简化SIFT类、函数
-
-matching_SIFT_opencv.py为SIFT类、函数（要跑很久）
-
-matching_BERT.py为BERT类、函数
-
-matching_NN.py为EfficientNet类、函数
-
-count.py为词频类、函数
-
-tf_idf.py为tf_idf类、函数
-
-utils为常用函数
-
-train_on_trainset.py为在训练数据集上训练的文件
 
 
-
-- What are contained in this file:
+## What are contained in this file:
 
 shopee-product-matching
 ├── count.py: functions to get Text Predictions using words frequency
